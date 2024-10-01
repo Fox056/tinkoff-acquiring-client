@@ -22,10 +22,14 @@ use SergeyZatulivetrov\TinkoffAcquiring\Data\RemoveCustomer;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\Resend;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\SendClosingReceipt;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\Submit3DSAuthorization;
+use SergeyZatulivetrov\TinkoffAcquiring\Data\CreateBeneficiaries;
+
 
 class Client implements ClientContract
 {
     public const API_URL = 'https://securepay.tinkoff.ru/v2/';
+    public const API_URL_T_ID = 'https://secured-openapi.tbank.ru/api/v1/';
+
 
     public function init(Init $data): array
     {
@@ -97,6 +101,11 @@ class Client implements ClientContract
         return $this->execute('RemoveCard', $data);
     }
 
+    public function createBeneficiaries(CreateBeneficiaries $data): array
+    {
+        return $this->executeTID('nominal-accounts/beneficiaries', $data);
+    }
+
     private function execute(string $action, DataContract $data, string $contentType = 'application/json'): array
     {
         $client = new HttpClient();
@@ -108,10 +117,32 @@ class Client implements ClientContract
                 RequestOptions::HEADERS => [
                     'Content-Type' => $contentType,
                 ],
-                RequestOptions::BODY    => json_encode($data->toArray()),
+                RequestOptions::BODY => json_encode($data->toArray()),
             ]
         );
 
         return json_decode($response->getBody()->getContents(), true);
     }
+
+    private function executeTID(string $action, DataContract $data, string $contentType = 'application/json', string $token = 'token', string $cert = '/path/to/openyes.crt.pem', $ssl_key = '/path/to/openyes.key.pem'): array
+    {
+        $client = new HttpClient();
+
+        $response = $client->request(
+            'POST',
+            self::API_URL_T_ID . $action,
+            [
+                RequestOptions::HEADERS => [
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $token
+                ],
+                RequestOptions::BODY => json_encode($data->toArray()),
+                RequestOptions::CERT => $cert,
+                RequestOptions::SSL_KEY => $ssl_key
+            ]
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
 }

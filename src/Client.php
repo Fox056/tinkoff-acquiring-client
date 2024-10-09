@@ -17,12 +17,12 @@ use SergeyZatulivetrov\TinkoffAcquiring\Data\GetCardList;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\GetCustomer;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\GetState;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\Init;
+use SergeyZatulivetrov\TinkoffAcquiring\Data\CreateBeneficiaries;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\RemoveCard;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\RemoveCustomer;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\Resend;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\SendClosingReceipt;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\Submit3DSAuthorization;
-use SergeyZatulivetrov\TinkoffAcquiring\Data\CreateBeneficiaries;
 
 
 class Client implements ClientContract
@@ -103,7 +103,8 @@ class Client implements ClientContract
 
     public function createBeneficiaries(CreateBeneficiaries $data): array
     {
-        return $this->executeTID('nominal-accounts/beneficiaries', $data);
+        $uuid = (new Data\CreateBeneficiaries)->uuidv4();
+        return $this->executeTID('nominal-accounts/beneficiaries', $data, $uuid);
     }
 
     private function execute(string $action, DataContract $data, string $contentType = 'application/json'): array
@@ -124,21 +125,22 @@ class Client implements ClientContract
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    private function executeTID(string $action, DataContract $data, string $contentType = 'application/json', string $token = 'token', string $cert = '/path/to/openyes.crt.pem', $ssl_key = '/path/to/openyes.key.pem'): array
+    private function executeTID(string $action, DataContract $data, $uuid): array
     {
         $client = new HttpClient();
-
         $response = $client->request(
             'POST',
             self::API_URL_T_ID . $action,
             [
                 RequestOptions::HEADERS => [
-                    'Content-Type' => $contentType,
-                    'Authorization' => 'Bearer ' . $token
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'Idempotency-Key' => $uuid,
+                    'Authorization' => 'Bearer ' . 't.aEIEHJTZwQddnrgeV2PJPZ_pCzI0c66S2zZtAZlPstgwDQJm4G9PQ7fg1GTY75z82zXF44ITphJw8KIZ9DQs2w'
                 ],
                 RequestOptions::BODY => json_encode($data->toArray()),
-                RequestOptions::CERT => $cert,
-                RequestOptions::SSL_KEY => $ssl_key
+                RequestOptions::CERT => '/etc/nginx/ssl/tinkoff/certificate-tinkoffapi.pem',
+                RequestOptions::SSL_KEY => '/etc/nginx/ssl/tinkoff/private-tinkoffapi.key'
             ]
         );
 

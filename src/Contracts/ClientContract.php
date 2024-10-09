@@ -13,6 +13,7 @@ use SergeyZatulivetrov\TinkoffAcquiring\Data\GetCardList;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\GetCustomer;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\GetState;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\Init;
+use SergeyZatulivetrov\TinkoffAcquiring\Data\CreateBeneficiaries;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\RemoveCard;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\RemoveCustomer;
 use SergeyZatulivetrov\TinkoffAcquiring\Data\Resend;
@@ -22,6 +23,8 @@ use SergeyZatulivetrov\TinkoffAcquiring\Data\Submit3DSAuthorization;
 interface ClientContract
 {
     public function init(Init $data): array;
+
+    public function CreateBeneficiaries(CreateBeneficiaries $data): array;
 
     public function finishAuthorize(FinishAuthorize $data): array;
 

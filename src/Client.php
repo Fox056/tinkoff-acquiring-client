@@ -29,6 +29,7 @@ class Client implements ClientContract
 {
     public const API_URL = 'https://securepay.tinkoff.ru/v2/';
     public const API_URL_T_ID = 'https://secured-openapi.tbank.ru/api/v1/';
+    public const API_URL_T_ID_v2 = 'https://secured-openapi.tbank.ru/api/v2/';
 
 
     public function init(Init $data): array
@@ -107,6 +108,11 @@ class Client implements ClientContract
         return $this->executeTID('nominal-accounts/beneficiaries', $data, $uuid);
     }
 
+    public function checkBeneficiaries(): array
+    {
+        return $this->executeTIDv2('nominal-accounts/beneficiaries/scoring');
+    }
+
     private function execute(string $action, DataContract $data, string $contentType = 'application/json'): array
     {
         $client = new HttpClient();
@@ -139,6 +145,25 @@ class Client implements ClientContract
                     'Authorization' => 'Bearer ' . 't.aEIEHJTZwQddnrgeV2PJPZ_pCzI0c66S2zZtAZlPstgwDQJm4G9PQ7fg1GTY75z82zXF44ITphJw8KIZ9DQs2w'
                 ],
                 RequestOptions::BODY => json_encode($data->toArray()),
+                RequestOptions::CERT => '/etc/nginx/ssl/tinkoff/certificate-tinkoffapi.pem',
+                RequestOptions::SSL_KEY => '/etc/nginx/ssl/tinkoff/private-tinkoffapi.key'
+            ]
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    private function executeTIDv2(string $action): array
+    {
+        $client = new HttpClient();
+        $response = $client->request(
+            'GET',
+            self::API_URL_T_ID_v2 . $action,
+            [
+                RequestOptions::HEADERS => [
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer ' . 't.aEIEHJTZwQddnrgeV2PJPZ_pCzI0c66S2zZtAZlPstgwDQJm4G9PQ7fg1GTY75z82zXF44ITphJw8KIZ9DQs2w'
+                ],
                 RequestOptions::CERT => '/etc/nginx/ssl/tinkoff/certificate-tinkoffapi.pem',
                 RequestOptions::SSL_KEY => '/etc/nginx/ssl/tinkoff/private-tinkoffapi.key'
             ]
